@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { message } from "@/utils/message";
 import { onMounted, reactive, ref } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import type { FormInstance, FormRules, UploadProps } from "element-plus";
+import { Plus } from "@element-plus/icons-vue";
 import {
   addPerson,
   fetchPersonPage,
   updatePerson,
+  uploadImage,
   type PersonPayload
 } from "@/api/iot";
 
 defineOptions({
-  name: "IotPersonListPage"
+  name: "People"
 });
 
 const personLoading = ref(false);
@@ -32,9 +34,12 @@ const formState = reactive({
   image: "",
   status: ""
 });
+const uploadLoading = ref(false);
+const imageUrl = ref("");
 
 const rules: FormRules = {
-  name: [{ required: true, message: "请输入姓名", trigger: "blur" }]
+  name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
+  image: [{ required: true, message: "请上传头像", trigger: "change" }]
 };
 
 const loadPersonPage = async () => {
@@ -63,6 +68,7 @@ const openAdd = () => {
   formState.snNumber = "";
   formState.image = "";
   formState.status = "";
+  imageUrl.value = "";
   dialogVisible.value = true;
 };
 
@@ -74,19 +80,64 @@ const openEdit = (person: PersonPayload) => {
   formState.snNumber = person.snNumber || "";
   formState.image = person.image || "";
   formState.status = person.status || "";
+  // 如果已有图片，直接使用完整 URL 显示；如果是相对路径则拼接
+  if (person.image) {
+    imageUrl.value = person.image.startsWith("https://")
+      ? person.image
+      : `https://tp.cewaycloud.com${person.image}`;
+  } else {
+    imageUrl.value = "";
+  }
   dialogVisible.value = true;
+};
+
+const handleUploadChange: UploadProps["onChange"] = async uploadFile => {
+  if (!uploadFile.raw) return;
+
+  const file = uploadFile.raw;
+  const isImage = file.type.startsWith("image/");
+  const isLt5M = file.size / 1024 / 1024 < 5;
+
+  if (!isImage) {
+    message("只能上传图片文件", { type: "error" });
+    return;
+  }
+  if (!isLt5M) {
+    message("图片大小不能超过 5MB", { type: "error" });
+    return;
+  }
+
+  uploadLoading.value = true;
+  try {
+    const result = await uploadImage(file);
+    formState.image = result.url;
+    imageUrl.value = `https://tp.cewaycloud.com${result.url}`;
+    message("上传成功", { type: "success" });
+  } catch (error) {
+    message("上传失败", { type: "error" });
+    console.error(error);
+  } finally {
+    uploadLoading.value = false;
+  }
 };
 
 const submit = async () => {
   if (!formRef.value) return;
   await formRef.value.validate(async valid => {
     if (!valid) return;
+
+    // 如果图片 URL 不是以 https:// 开头，则拼接完整前缀
+    let fullImageUrl = formState.image || null;
+    if (fullImageUrl && !fullImageUrl.startsWith("https://")) {
+      fullImageUrl = `https://tp.cewaycloud.com${fullImageUrl}`;
+    }
+
     const payload: PersonPayload = {
       id: formState.id ? Number(formState.id) : undefined,
       name: formState.name,
       number: formState.number || null,
       snNumber: formState.snNumber || null,
-      image: formState.image || null,
+      image: fullImageUrl,
       status: formState.status || null,
       delFlag: "0"
     };
@@ -116,10 +167,7 @@ onMounted(() => {
     <el-card shadow="never">
       <template #header>
         <div>
-          <h2 class="text-base font-semibold">人员分页查询</h2>
-          <p class="text-sm text-gray-500">
-            调用 /personne/page 获取人员分页列表
-          </p>
+          <h2 class="text-base font-semibold">人员列表</h2>
         </div>
       </template>
 
@@ -136,7 +184,19 @@ onMounted(() => {
 
       <el-table :data="personData" :loading="personLoading" border stripe>
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="姓名" min-width="140" />
+        <el-table-column label="头像" width="80">
+          <template #default="{ row }">
+            <el-image
+              v-if="row.image"
+              :src="`${row.image}`"
+              fit="cover"
+              style="width: 50px; height: 50px; border-radius: 4px"
+              :preview-src-list="[`${row.image}`]"
+            />
+            <span v-else class="text-gray-400">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="姓名" min-width="120" />
         <el-table-column prop="number" label="工号" min-width="120" />
         <el-table-column prop="snNumber" label="SN编号" min-width="160" />
         <el-table-column prop="status" label="状态" width="120" />
@@ -178,14 +238,28 @@ onMounted(() => {
         <el-form-item label="姓名" prop="name">
           <el-input v-model="formState.name" placeholder="请输入姓名" />
         </el-form-item>
+        <el-form-item label="头像" prop="image" required>
+          <el-upload
+            class="avatar-uploader"
+            :show-file-list="false"
+            :on-change="handleUploadChange"
+            :auto-upload="false"
+            accept="image/*"
+          >
+            <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+            <el-icon v-else class="avatar-uploader-icon" :size="50">
+              <Plus />
+            </el-icon>
+          </el-upload>
+          <div class="text-xs text-gray-500 mt-1">
+            支持 jpg、png 格式，大小不超过 5MB
+          </div>
+        </el-form-item>
         <el-form-item label="工号">
           <el-input v-model="formState.number" placeholder="请输入工号" />
         </el-form-item>
         <el-form-item label="SN编号">
           <el-input v-model="formState.snNumber" placeholder="请输入SN编号" />
-        </el-form-item>
-        <el-form-item label="头像">
-          <el-input v-model="formState.image" placeholder="请输入头像地址" />
         </el-form-item>
         <el-form-item label="状态">
           <el-input v-model="formState.status" placeholder="请输入状态" />
@@ -202,5 +276,39 @@ onMounted(() => {
 <style scoped>
 .iot-person-list :deep(.el-card__header) {
   padding-bottom: 0.5rem;
+}
+
+.avatar-uploader {
+  display: inline-block;
+}
+
+.avatar-uploader :deep(.el-upload) {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader :deep(.el-upload:hover) {
+  border-color: var(--el-color-primary);
+}
+
+.avatar-uploader-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 148px;
+  height: 148px;
+  font-size: 28px;
+  color: #8c939d;
+}
+
+.avatar {
+  display: block;
+  width: 148px;
+  height: 148px;
+  object-fit: cover;
 }
 </style>

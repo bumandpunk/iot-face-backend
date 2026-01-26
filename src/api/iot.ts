@@ -1,11 +1,18 @@
 import { http } from "@/utils/http";
+import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_IOT_API_BASE || "http://10.10.50.2:6160";
+const API_BASE = import.meta.env.VITE_IOT_API_BASE || "";
 
 export type ApiResponse<T> = {
   code: number;
   msg: string | null;
   data: T;
+};
+
+export type UploadResponse = {
+  bucketName: string;
+  fileName: string;
+  url: string;
 };
 
 export type PageResult<T> = {
@@ -96,7 +103,7 @@ export const fetchRecordDetail = (id: number) =>
 export const fetchPersonPage = (query: PersonQuery) =>
   http.request<ApiResponse<PageResult<PersonPayload>>>(
     "post",
-    `${API_BASE}/personne/page`,
+    `${API_BASE}/api/personne/page`,
     {
       data: {
         name: query.name,
@@ -109,7 +116,7 @@ export const fetchPersonPage = (query: PersonQuery) =>
 export const addPerson = (payload: PersonPayload) =>
   http.request<ApiResponse<PageResult<PersonPayload>>>(
     "post",
-    `${API_BASE}/personne/add`,
+    `${API_BASE}/api/personne/add`,
     {
       data: payload
     }
@@ -118,8 +125,33 @@ export const addPerson = (payload: PersonPayload) =>
 export const updatePerson = (payload: PersonPayload) =>
   http.request<ApiResponse<PageResult<PersonPayload>>>(
     "put",
-    `${API_BASE}/personne/update`,
+    `${API_BASE}/api/personne/update`,
     {
       data: payload
     }
   );
+
+/** 上传图片 */
+export const uploadImage = async (file: File): Promise<UploadResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axios.post<ApiResponse<UploadResponse>>(
+    "/upload-proxy/admin/sys-file/upload",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: "Bearer 1374ba48-9ddc-423b-a9ba-4432ae5a0f35",
+        "platform-id": "1689154431733325826",
+        "tenant-id": "1643792365307961346"
+      }
+    }
+  );
+
+  if (response.data.code !== 0) {
+    throw new Error(response.data.msg || "上传失败");
+  }
+
+  return response.data.data;
+};

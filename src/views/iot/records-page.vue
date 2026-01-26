@@ -10,7 +10,7 @@ import {
 } from "@/api/iot";
 
 defineOptions({
-  name: "IotRecordsPage"
+  name: "Records"
 });
 
 const recordLoading = ref(false);
@@ -71,10 +71,7 @@ onMounted(() => {
     <el-card shadow="never">
       <template #header>
         <div>
-          <h2 class="text-base font-semibold">进出记录分页查询</h2>
-          <p class="text-sm text-gray-500">
-            调用 /api/base-record/page 查询进出记录列表
-          </p>
+          <h2 class="text-base font-semibold">进出记录</h2>
         </div>
       </template>
 
