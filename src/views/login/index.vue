@@ -36,9 +36,14 @@ const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
 dataThemeChange(overallStyle.value);
 const { title } = useNav();
 
-const ruleForm = reactive({
+const fixedAccount = {
   username: "admin",
   password: "admin123"
+};
+
+const ruleForm = reactive({
+  username: fixedAccount.username,
+  password: fixedAccount.password
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
@@ -48,8 +53,8 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       loading.value = true;
       useUserStoreHook()
         .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
+          username: fixedAccount.username,
+          password: fixedAccount.password
         })
         .then(res => {
           if (res.success) {
@@ -118,6 +123,15 @@ useEventListener(document, "keydown", ({ code }) => {
             :rules="loginRules"
             size="large"
           >
+            <Motion :delay="50">
+              <el-alert
+                type="info"
+                show-icon
+                :closable="false"
+                title="默认账号：admin / admin123"
+                class="mb-4"
+              />
+            </Motion>
             <Motion :delay="100">
               <el-form-item
                 :rules="[
@@ -134,6 +148,7 @@ useEventListener(document, "keydown", ({ code }) => {
                   clearable
                   placeholder="账号"
                   :prefix-icon="useRenderIcon(User)"
+                  readonly
                 />
               </el-form-item>
             </Motion>
@@ -146,6 +161,7 @@ useEventListener(document, "keydown", ({ code }) => {
                   show-password
                   placeholder="密码"
                   :prefix-icon="useRenderIcon(Lock)"
+                  readonly
                 />
               </el-form-item>
             </Motion>
