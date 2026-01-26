@@ -1,6 +1,6 @@
 import { http } from "@/utils/http";
 
-const API_BASE = import.meta.env.VITE_IOT_API_BASE || "http://localhost:6160";
+const API_BASE = import.meta.env.VITE_IOT_API_BASE || "http://10.10.50.2:6160";
 
 export type ApiResponse<T> = {
   code: number;
