@@ -184,3 +184,44 @@ export const openDoor = (payload: OpenDoorRequest) =>
 
 //   return response.data;
 // };
+
+export type AttendanceQuery = {
+  name: string;
+  pageNum: number;
+  pageSize: number;
+  date: string;
+};
+
+export type AttendanceRecord = {
+  id: number;
+  name: string;
+  cardNumber: string;
+  department: string | null;
+  position: string | null;
+  date: string;
+  dateType: string | null;
+  clockIn: string | null;
+  clockOut: string | null;
+  clockAddress: string | null;
+  reason: string | null;
+  clockStatus: string;
+  createTime: string;
+  updateTime: string;
+  deleted: number;
+  dateTime: string | null;
+  deviceNumber: string;
+};
+
+export const fetchAttendancePage = (query: AttendanceQuery) =>
+  http.request<ApiResponse<PageResult<AttendanceRecord>>>(
+    "post",
+    `${API_BASE}/api/attendance/page`,
+    {
+      data: {
+        name: query.name,
+        pageNum: String(query.pageNum),
+        pageSize: String(query.pageSize),
+        date: query.date
+      }
+    }
+  );

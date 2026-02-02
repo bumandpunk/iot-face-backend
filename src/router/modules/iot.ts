@@ -37,6 +37,15 @@ export default {
         title: "远程开门",
         showLink: true
       }
+    },
+    {
+      path: "/attendance",
+      name: "Attendance",
+      component: () => import("@/views/iot/attendance-page.vue"),
+      meta: {
+        title: "考勤统计",
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;
