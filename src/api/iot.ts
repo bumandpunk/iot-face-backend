@@ -28,6 +28,7 @@ export type RecordQuery = {
   name: string;
   pageNum: number;
   pageSize: number;
+  personType: number;
 };
 
 export type BaseRecord = {
@@ -88,6 +89,7 @@ export const fetchRecordPage = (query: RecordQuery) =>
       data: {
         sn: query.sn,
         name: query.name,
+        personType: query.personType,
         pageNum: String(query.pageNum),
         pageSize: String(query.pageSize)
       }
@@ -137,21 +139,48 @@ export const uploadImage = async (file: File): Promise<UploadResponse> => {
   formData.append("file", file);
 
   const response = await axios.post<ApiResponse<UploadResponse>>(
-    "/upload-proxy/admin/sys-file/upload",
+    "/api/images/upload",
     formData,
     {
       headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: "Bearer 1374ba48-9ddc-423b-a9ba-4432ae5a0f35",
-        "platform-id": "1689154431733325826",
-        "tenant-id": "1643792365307961346"
+        "Content-Type": "multipart/form-data"
       }
     }
   );
 
   if (response.data.code !== 0) {
+    console.log(response);
     throw new Error(response.data.msg || "上传失败");
   }
 
   return response.data.data;
 };
+
+export type OpenDoorRequest = {
+  cmd: string;
+  token: string;
+  sn: string;
+};
+
+export type OpenDoorResponse = {
+  code: number;
+  msg: string;
+  data?: any;
+};
+
+export const openDoor = (payload: OpenDoorRequest) =>
+  http.request<ApiResponse<PageResult<OpenDoorRequest>>>(
+    "post",
+    `${API_BASE}/api/opera/sendOperate/accessContro`,
+    {
+      data: payload
+    }
+  );
+// export const openDoor = async (payload: OpenDoorRequest): Promise<OpenDoorResponse> => {
+//   const response = await axios.post<OpenDoorResponse>(
+//     "/opera/sendOperate/accessControl",
+//     payload
+//   );
+
+//   return response.data;
+// };

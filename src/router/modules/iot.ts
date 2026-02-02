@@ -28,6 +28,15 @@ export default {
         title: "人员列表",
         showLink: true
       }
+    },
+    {
+      path: "/remote-door",
+      name: "RemoteDoor",
+      component: () => import("@/views/iot/remote-door-page.vue"),
+      meta: {
+        title: "远程开门",
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

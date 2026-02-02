@@ -80,11 +80,9 @@ const openEdit = (person: PersonPayload) => {
   formState.snNumber = person.snNumber || "";
   formState.image = person.image || "";
   formState.status = person.status || "";
-  // 如果已有图片，直接使用完整 URL 显示；如果是相对路径则拼接
+  // 如果已有图片，直接使用完整 URL 显示
   if (person.image) {
-    imageUrl.value = person.image.startsWith("https://")
-      ? person.image
-      : `https://tp.cewaycloud.com${person.image}`;
+    imageUrl.value = person.image;
   } else {
     imageUrl.value = "";
   }
@@ -111,10 +109,10 @@ const handleUploadChange: UploadProps["onChange"] = async uploadFile => {
   try {
     const result = await uploadImage(file);
     formState.image = result.url;
-    imageUrl.value = `https://tp.cewaycloud.com${result.url}`;
+    imageUrl.value = result.url;
     message("上传成功", { type: "success" });
-  } catch (error) {
-    message("上传失败", { type: "error" });
+  } catch (error: any) {
+    message(error.message || "上传失败", { type: "error" });
     console.error(error);
   } finally {
     uploadLoading.value = false;
@@ -126,11 +124,8 @@ const submit = async () => {
   await formRef.value.validate(async valid => {
     if (!valid) return;
 
-    // 如果图片 URL 不是以 https:// 开头，则拼接完整前缀
+    // 直接使用上传接口返回的完整 URL
     let fullImageUrl = formState.image || null;
-    if (fullImageUrl && !fullImageUrl.startsWith("https://")) {
-      fullImageUrl = `https://tp.cewaycloud.com${fullImageUrl}`;
-    }
 
     const payload: PersonPayload = {
       id: formState.id ? Number(formState.id) : undefined,
@@ -188,18 +183,21 @@ onMounted(() => {
           <template #default="{ row }">
             <el-image
               v-if="row.image"
-              :src="`${row.image}`"
+              :src="row.image"
               fit="cover"
-              style="width: 50px; height: 50px; border-radius: 4px"
-              :preview-src-list="[`${row.image}`]"
+              class="table-avatar"
+              :preview-src-list="[row.image]"
+              :z-index="100000"
+              preview-teleported
+              hide-on-click-modal
             />
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="name" label="姓名" min-width="120" />
         <el-table-column prop="number" label="工号" min-width="120" />
-        <el-table-column prop="snNumber" label="SN编号" min-width="160" />
-        <el-table-column prop="status" label="状态" width="120" />
+        <!-- <el-table-column prop="snNumber" label="SN编号" min-width="160" /> -->
+        <el-table-column prop="nameType" label="人员类型" width="120" />
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
             <el-button type="primary" link @click="openEdit(row)">
@@ -258,12 +256,12 @@ onMounted(() => {
         <el-form-item label="工号">
           <el-input v-model="formState.number" placeholder="请输入工号" />
         </el-form-item>
-        <el-form-item label="SN编号">
+        <!-- <el-form-item label="SN编号">
           <el-input v-model="formState.snNumber" placeholder="请输入SN编号" />
         </el-form-item>
         <el-form-item label="状态">
           <el-input v-model="formState.status" placeholder="请输入状态" />
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -276,6 +274,13 @@ onMounted(() => {
 <style scoped>
 .iot-person-list :deep(.el-card__header) {
   padding-bottom: 0.5rem;
+}
+
+.table-avatar {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .avatar-uploader {
@@ -310,5 +315,29 @@ onMounted(() => {
   width: 148px;
   height: 148px;
   object-fit: cover;
+}
+</style>
+
+<style>
+/* 全局样式：修复图片预览层级问题 - 确保高于所有组件（右侧面板是40000） */
+.el-image-viewer__wrapper {
+  z-index: 100000 !important;
+}
+
+.el-image-viewer__mask {
+  z-index: 99999 !important;
+}
+
+.el-overlay {
+  z-index: 99998 !important;
+}
+
+/* 确保图片预览器的关闭按钮可点击 */
+.el-image-viewer__close {
+  z-index: 100001 !important;
+}
+
+.el-image-viewer__actions {
+  z-index: 100001 !important;
 }
 </style>
