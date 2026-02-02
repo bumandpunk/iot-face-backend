@@ -2,15 +2,22 @@
 import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import { onMounted, reactive, ref } from "vue";
-import { fetchAttendancePage, type AttendanceRecord } from "@/api/iot";
+import {
+  fetchAttendancePage,
+  exportAttendance,
+  type AttendanceRecord
+} from "@/api/iot";
 
 defineOptions({
   name: "Attendance"
 });
 
 const attendanceLoading = ref(false);
+const exportLoading = ref(false);
 const attendanceQuery = reactive({
   name: "",
+  cardNumber: "",
+  clockStatus: "",
   pageNum: 1,
   pageSize: 10,
   date: dayjs().format("YYYY-MM-DD")
@@ -38,9 +45,28 @@ const handleAttendanceSearch = () => {
 
 const handleReset = () => {
   attendanceQuery.name = "";
+  attendanceQuery.cardNumber = "";
+  attendanceQuery.clockStatus = "";
   attendanceQuery.date = dayjs().format("YYYY-MM-DD");
   attendanceQuery.pageNum = 1;
   loadAttendancePage();
+};
+
+const handleExport = async () => {
+  exportLoading.value = true;
+  try {
+    await exportAttendance({
+      name: attendanceQuery.name,
+      cardNumber: attendanceQuery.cardNumber,
+      clockStatus: attendanceQuery.clockStatus,
+      date: attendanceQuery.date
+    });
+    message("导出成功", { type: "success" });
+  } catch (error) {
+    message("导出失败", { type: "error" });
+  } finally {
+    exportLoading.value = false;
+  }
 };
 
 onMounted(() => {
@@ -65,6 +91,23 @@ onMounted(() => {
             clearable
           />
         </el-form-item>
+        <el-form-item label="卡号">
+          <el-input
+            v-model="attendanceQuery.cardNumber"
+            placeholder="请输入卡号"
+            clearable
+          />
+        </el-form-item>
+        <!-- <el-form-item label="考勤状态">
+          <el-select
+            v-model="attendanceQuery.clockStatus"
+            placeholder="请选择考勤状态"
+            clearable
+          >
+            <el-option label="上班" value="上班" />
+            <el-option label="下班" value="下班" />
+          </el-select>
+        </el-form-item> -->
         <el-form-item label="日期">
           <el-date-picker
             v-model="attendanceQuery.date"
@@ -79,6 +122,13 @@ onMounted(() => {
             查询
           </el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="success"
+            :loading="exportLoading"
+            @click="handleExport"
+          >
+            导出
+          </el-button>
         </el-form-item>
       </el-form>
 
@@ -92,7 +142,7 @@ onMounted(() => {
         <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column prop="cardNumber" label="卡号" width="120" />
-        <el-table-column prop="department" label="部门" min-width="120">
+        <!-- <el-table-column prop="department" label="部门" min-width="120">
           <template #default="{ row }">
             {{ row.department || "-" }}
           </template>
@@ -101,7 +151,7 @@ onMounted(() => {
           <template #default="{ row }">
             {{ row.position || "-" }}
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column prop="date" label="日期" width="120" />
         <el-table-column prop="clockIn" label="上班时间" width="100">
           <template #default="{ row }">

@@ -190,6 +190,15 @@ export type AttendanceQuery = {
   pageNum: number;
   pageSize: number;
   date: string;
+  cardNumber?: string;
+  clockStatus?: string;
+};
+
+export type AttendanceExportParams = {
+  name: string;
+  date: string;
+  cardNumber: string;
+  clockStatus: string;
 };
 
 export type AttendanceRecord = {
@@ -221,7 +230,37 @@ export const fetchAttendancePage = (query: AttendanceQuery) =>
         name: query.name,
         pageNum: String(query.pageNum),
         pageSize: String(query.pageSize),
-        date: query.date
+        date: query.date,
+        cardNumber: query.cardNumber || "",
+        clockStatus: query.clockStatus || ""
       }
     }
   );
+
+export const exportAttendance = async (params: AttendanceExportParams) => {
+  const response = await axios.post(
+    `${API_BASE}/api/attendance/export`,
+    {
+      name: params.name,
+      date: params.date,
+      cardNumber: params.cardNumber,
+      clockStatus: params.clockStatus
+    },
+    {
+      responseType: "blob"
+    }
+  );
+
+  // 创建下载链接
+  const blob = new Blob([response.data], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `考勤统计_${params.date}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
