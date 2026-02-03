@@ -189,14 +189,16 @@ export type AttendanceQuery = {
   name: string;
   pageNum: number;
   pageSize: number;
-  date: string;
+  startDate: string;
+  endDate: string;
   cardNumber?: string;
   clockStatus?: string;
 };
 
 export type AttendanceExportParams = {
   name: string;
-  date: string;
+  startDate: string;
+  endDate: string;
   cardNumber: string;
   clockStatus: string;
 };
@@ -230,7 +232,8 @@ export const fetchAttendancePage = (query: AttendanceQuery) =>
         name: query.name,
         pageNum: String(query.pageNum),
         pageSize: String(query.pageSize),
-        date: query.date,
+        startDate: query.startDate,
+        endDate: query.endDate,
         cardNumber: query.cardNumber || "",
         clockStatus: query.clockStatus || ""
       }
@@ -242,7 +245,8 @@ export const exportAttendance = async (params: AttendanceExportParams) => {
     `${API_BASE}/api/attendance/export`,
     {
       name: params.name,
-      date: params.date,
+      startDate: params.startDate,
+      endDate: params.endDate,
       cardNumber: params.cardNumber,
       clockStatus: params.clockStatus
     },
@@ -258,7 +262,7 @@ export const exportAttendance = async (params: AttendanceExportParams) => {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `考勤统计_${params.date}.xlsx`;
+  link.download = `考勤统计_${params.startDate}_${params.endDate}.xlsx`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

@@ -14,13 +14,18 @@ defineOptions({
 
 const attendanceLoading = ref(false);
 const exportLoading = ref(false);
+const dateRange = ref<[string, string]>([
+  dayjs().format("YYYY-MM-DD"),
+  dayjs().format("YYYY-MM-DD")
+]);
 const attendanceQuery = reactive({
   name: "",
   cardNumber: "",
   clockStatus: "",
   pageNum: 1,
   pageSize: 10,
-  date: dayjs().format("YYYY-MM-DD")
+  startDate: dayjs().format("YYYY-MM-DD"),
+  endDate: dayjs().format("YYYY-MM-DD")
 });
 const attendanceTotal = ref(0);
 const attendanceData = ref<AttendanceRecord[]>([]);
@@ -28,6 +33,11 @@ const attendanceData = ref<AttendanceRecord[]>([]);
 const loadAttendancePage = async () => {
   attendanceLoading.value = true;
   try {
+    // 更新查询参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      attendanceQuery.startDate = dateRange.value[0];
+      attendanceQuery.endDate = dateRange.value[1];
+    }
     const res = await fetchAttendancePage(attendanceQuery);
     attendanceData.value = res.data.records ?? [];
     attendanceTotal.value = res.data.total ?? 0;
@@ -47,7 +57,10 @@ const handleReset = () => {
   attendanceQuery.name = "";
   attendanceQuery.cardNumber = "";
   attendanceQuery.clockStatus = "";
-  attendanceQuery.date = dayjs().format("YYYY-MM-DD");
+  const now = dayjs().format("YYYY-MM-DD");
+  dateRange.value = [now, now];
+  attendanceQuery.startDate = now;
+  attendanceQuery.endDate = now;
   attendanceQuery.pageNum = 1;
   loadAttendancePage();
 };
@@ -59,7 +72,8 @@ const handleExport = async () => {
       name: attendanceQuery.name,
       cardNumber: attendanceQuery.cardNumber,
       clockStatus: attendanceQuery.clockStatus,
-      date: attendanceQuery.date
+      startDate: attendanceQuery.startDate,
+      endDate: attendanceQuery.endDate
     });
     message("导出成功", { type: "success" });
   } catch (error) {
@@ -108,11 +122,13 @@ onMounted(() => {
             <el-option label="下班" value="下班" />
           </el-select>
         </el-form-item> -->
-        <el-form-item label="日期">
+        <el-form-item label="时间范围">
           <el-date-picker
-            v-model="attendanceQuery.date"
-            type="date"
-            placeholder="选择日期"
+            v-model="dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
