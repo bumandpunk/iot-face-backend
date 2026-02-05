@@ -46,6 +46,15 @@ export default {
         title: "考勤统计",
         showLink: true
       }
+    },
+    {
+      path: "/rfid-ware",
+      name: "RfidWare",
+      component: () => import("@/views/iot/rfid-ware-page.vue"),
+      meta: {
+        title: "固资进出记录",
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

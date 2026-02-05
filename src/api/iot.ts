@@ -268,3 +268,43 @@ export const exportAttendance = async (params: AttendanceExportParams) => {
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 };
+
+export type RfidWareQuery = {
+  rfidWareName: string;
+  rfidNo: string;
+  pageNum: number;
+  pageSize: number;
+};
+
+export type RfidWareRecord = {
+  id: string;
+  rfidWareName: string;
+  rfidNo: string;
+  areaCode: string | null;
+  ip: string;
+  msg: string;
+  faceDeviceSn: string | null;
+  operateType: number | null;
+  deleted: number;
+  creatorId: string;
+  createTime: string | null;
+  creatorName: string | null;
+  modifierId: string | null;
+  modifyTime: string | null;
+  modifierName: string | null;
+  operateTypeDesc: string;
+};
+
+export const fetchRfidWarePage = (query: RfidWareQuery) =>
+  http.request<ApiResponse<PageResult<RfidWareRecord>>>(
+    "post",
+    `${API_BASE}/api/rfidWare/page`,
+    {
+      data: {
+        rfidWareName: query.rfidWareName,
+        rfidNo: query.rfidNo,
+        pageNum: String(query.pageNum),
+        pageSize: String(query.pageSize)
+      }
+    }
+  );
