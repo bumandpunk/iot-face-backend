@@ -32,13 +32,15 @@ const formState = reactive({
   number: "",
   snNumber: "",
   image: "",
-  status: ""
+  status: "",
+  mobile: ""
 });
 const uploadLoading = ref(false);
 const imageUrl = ref("");
 
 const rules: FormRules = {
   name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
+  mobile: [{ required: true, message: "请输入手机号", trigger: "blur" }],
   image: [{ required: true, message: "请上传头像", trigger: "change" }]
 };
 
@@ -68,6 +70,7 @@ const openAdd = () => {
   formState.snNumber = "";
   formState.image = "";
   formState.status = "";
+  formState.mobile = "";
   imageUrl.value = "";
   dialogVisible.value = true;
 };
@@ -80,6 +83,7 @@ const openEdit = (person: PersonPayload) => {
   formState.snNumber = person.snNumber || "";
   formState.image = person.image || "";
   formState.status = person.status || "";
+  formState.mobile = person.mobile || "";
   // 如果已有图片，直接使用完整 URL 显示
   if (person.image) {
     imageUrl.value = person.image;
@@ -196,7 +200,7 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="name" label="姓名" min-width="120" />
         <el-table-column prop="number" label="工号" min-width="120" />
-        <!-- <el-table-column prop="snNumber" label="SN编号" min-width="160" /> -->
+        <el-table-column prop="mobile" label="手机号" min-width="160" />
         <el-table-column prop="nameType" label="人员类型" width="120" />
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
@@ -235,6 +239,9 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="姓名" prop="name">
           <el-input v-model="formState.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="formState.mobile" placeholder="请输入手机号" />
         </el-form-item>
         <el-form-item label="头像" prop="image" required>
           <el-upload
