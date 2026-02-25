@@ -10,9 +10,10 @@ export type ApiResponse<T> = {
 };
 
 export type UploadResponse = {
-  bucketName: string;
+  bucketName?: string;
   fileName: string;
-  url: string;
+  url?: string;
+  imageUrl?: string;
 };
 
 export type PageResult<T> = {
@@ -79,6 +80,7 @@ export type PersonPayload = {
   snNumber?: string | null;
   nameType?: string | null;
   image?: string | null;
+  mobile?: string | null;
 };
 
 export const fetchRecordPage = (query: RecordQuery) =>

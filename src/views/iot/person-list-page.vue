@@ -33,7 +33,8 @@ const formState = reactive({
   snNumber: "",
   image: "",
   status: "",
-  mobile: ""
+  mobile: "",
+  nameType: ""
 });
 const uploadLoading = ref(false);
 const imageUrl = ref("");
@@ -71,6 +72,7 @@ const openAdd = () => {
   formState.image = "";
   formState.status = "";
   formState.mobile = "";
+  formState.nameType = "";
   imageUrl.value = "";
   dialogVisible.value = true;
 };
@@ -84,6 +86,7 @@ const openEdit = (person: PersonPayload) => {
   formState.image = person.image || "";
   formState.status = person.status || "";
   formState.mobile = person.mobile || "";
+  formState.nameType = person.nameType || "";
   // 如果已有图片，直接使用完整 URL 显示
   if (person.image) {
     imageUrl.value = person.image;
@@ -109,13 +112,23 @@ const handleUploadChange: UploadProps["onChange"] = async uploadFile => {
     return;
   }
 
+  // 本地预览：先用 ObjectURL 显示图片
+  const localUrl = URL.createObjectURL(file);
+  imageUrl.value = localUrl;
+
   uploadLoading.value = true;
   try {
     const result = await uploadImage(file);
-    formState.image = result.url;
-    imageUrl.value = result.url;
+    // 接口返回字段为 imageUrl，兜底取 url
+    const uploadedUrl = result.imageUrl || result.url || "";
+    formState.image = uploadedUrl;
+    imageUrl.value = uploadedUrl;
+    URL.revokeObjectURL(localUrl);
+    // 上传成功后清除 image 字段的校验错误
+    formRef.value?.clearValidate("image");
     message("上传成功", { type: "success" });
   } catch (error: any) {
+    imageUrl.value = "";
     message(error.message || "上传失败", { type: "error" });
     console.error(error);
   } finally {
@@ -138,6 +151,7 @@ const submit = async () => {
       snNumber: formState.snNumber || null,
       image: fullImageUrl,
       status: formState.status || null,
+      nameType: formState.nameType || null,
       delFlag: "0"
     };
     try {
@@ -263,6 +277,9 @@ onMounted(() => {
         <el-form-item label="工号">
           <el-input v-model="formState.number" placeholder="请输入工号" />
         </el-form-item>
+        <el-form-item label="人员类型">
+          <el-input v-model="formState.nameType" placeholder="请输入人员类型" />
+        </el-form-item>
         <!-- <el-form-item label="SN编号">
           <el-input v-model="formState.snNumber" placeholder="请输入SN编号" />
         </el-form-item>
@@ -296,6 +313,9 @@ onMounted(() => {
 
 .avatar-uploader :deep(.el-upload) {
   position: relative;
+  display: block;
+  width: 148px;
+  height: 148px;
   overflow: hidden;
   cursor: pointer;
   border: 1px dashed var(--el-border-color);
