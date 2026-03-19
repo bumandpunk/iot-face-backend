@@ -152,6 +152,7 @@ const submit = async () => {
       image: fullImageUrl,
       status: formState.status || null,
       nameType: formState.nameType || null,
+      mobile: formState.mobile || null,
       delFlag: "0"
     };
     try {
